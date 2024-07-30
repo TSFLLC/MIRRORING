@@ -1,0 +1,7 @@
+	6. Use this script to disable encriptipn if needed
+CREATE ENDPOINT Mirroring
+STATE = STARTED
+AS TCP ( LISTENER_PORT = 5022 )
+FOR DATABASE_MIRRORING 
+(ENCRYPTION = DISABLED,ROLE=ALL)
+GO
