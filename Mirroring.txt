@@ -1,0 +1,103 @@
+   PRINCIPAL SERVER
+
+---CHECK MIRRORING ENDPOINT IF EXIST and drop
+SELECT * FROM sys.database_mirroring_endpoints;
+
+drop endpoint Mirroring
+
+---------------------------------------START CONFIGURATION---------------------------------
+
+---------Connect to (primary server) via SSMS
+-- Step-1. (PRIMARY) 
+-- Create a database mirroring endpoint
+USE master   
+GO
+CREATE ENDPOINT Mirroring  
+    STATE=STARTED   
+    AS TCP (LISTENER_PORT=5022)   
+    FOR DATABASE_MIRRORING (ROLE=PARTNER)  
+GO
+ 
+-- Step-2. (PRIMARY) 
+-- Grant connect permissions on endpoint to the login account of the mirror server's SQL Server account
+GRANT CONNECT ON ENDPOINT::Mirroring TO [Domain\service account]
+
+
+
+-- Step-5. (PRIMARY) 
+-- Take full and transaction log backups of the database 
+
+
+-- Step-8. (PRIMARY) 
+-- Set the partner instance on the primary server  ( Note: use serverName for Mirror server)
+USE master 
+GO 
+ALTER DATABASE DBName SET PARTNER = 'TCP://ServerName.Domain.compagnyName:5022'  
+GO
+
+_______________________________________________________
+
+   SECONDARY  SERVER
+
+---CHECK MIRRORING ENDPOINT IF EXIST and drop
+
+SELECT * FROM sys.database_mirroring_endpoints;
+
+drop endpoint Mirroring
+
+
+
+---------Connect to DBSERVER2(mirror server) via SSMS
+-- Step-3. (MIRROR) 
+-- Create a database mirroring endpoint 
+USE master   
+GO
+CREATE ENDPOINT Mirroring  
+    STATE=STARTED   
+    AS TCP (LISTENER_PORT=5022)   
+    FOR DATABASE_MIRRORING (ROLE=PARTNER)  
+GO 
+
+-- Step-4. (MIRROR) 
+-- Grant connect permissions on endpoint to the login account of the primary server's SQL Server account
+GRANT CONNECT ON ENDPOINT::Mirroring TO [Domain\service account]
+
+
+-- Step-6. (MIRROR) 
+-- Restore backups(Full and log) on the mirror server with NORECOVERY 
+
+
+-- Step-7. (MIRROR) 
+-- Set the partner instance on the mirror server  ( Note: use serverName for PRINCIPAL server)  First run the secondary
+ USE master 
+  GO
+ALTER DATABASE DBName SET PARTNER ='ServerName.Domain.compagnyName:5022' 
+GO
+
+
+
+
+
+Check Mirroring status
+
+
+select 
+ db.name, 
+ db.state_desc, 
+ dm.mirroring_role_desc, 
+ dm.mirroring_state_desc,
+ dm.mirroring_safety_level_desc,
+ dm.mirroring_partner_name, 
+ dm.mirroring_partner_instance 
+from sys.databases db
+inner join sys.database_mirroring dm
+on db.database_id = dm.database_id
+where dm.mirroring_role_desc is not null
+order by db.name
+
+
+
+
+
+
+
