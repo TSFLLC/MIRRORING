@@ -1,0 +1,13 @@
+
+		2. Check the mirroring end point if any
+
+SELECT * FROM sys.database_mirroring_endpoints;
+
+	3. Drop the existing end point with following statement
+drop endpoint Mirroring
+Go
+	4. Those 3 steps will be done on both server
+
+--5. if endpoint are okay. Check on firewall. Run this to allow firewall in powershell
+       Run in both server
+New-NetFirewallRule -DisplayName "FLX Firewall" -Direction Inbound -Protocol TCP -LocalPort 3000-60000 -Action allow
